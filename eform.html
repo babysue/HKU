@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>活動報名</title>
+  <style>
+    body{font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial;color:#111;margin:0}
+    .wrap{max-width:900px;margin:40px auto;padding:0 16px}
+    .btn{display:inline-block;padding:12px 18px;background:#2563eb;color:#fff;border-radius:10px;text-decoration:none;border:0;cursor:pointer;font-weight:600}
+    /* Modal */
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;padding:16px}
+    .dialog{background:#fff;max-width:720px;width:100%;border-radius:12px;padding:22px;border:1px solid #e5e7eb}
+    .close{float:right;border:0;background:transparent;font-size:22px;cursor:pointer}
+    form{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-top:10px}
+    .field{grid-column:span 6;display:flex;flex-direction:column;gap:6px}
+    .half{grid-column:span 6}@media(min-width:720px){.half{grid-column:span 3}}
+    input,select{padding:12px;border:1px solid #e5e7eb;border-radius:10px;font:inherit}
+    input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px #93c5fd}
+    .req{color:#dc2626}
+    .hint{color:#6b7280;font-size:12px}
+    .ok{display:none;margin-top:8px;padding:10px;border:1px solid #c7f9cc;background:#ecfdf5;border-radius:10px}
+    .err{display:none;color:#dc2626;font-size:14px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Future Cities Symposium 2025 報名</h1>
+    <p class="hint">點擊下方「註冊」將彈出表單，提交後會把內容寄到 <strong>liuy097@gmail.com</strong>。</p>
+    <button id="open" class="btn">註冊</button>
+  </div>
+
+  <!-- Modal -->
+  <div id="overlay" class="overlay" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="t">
+      <button class="close" id="close" aria-label="Close">×</button>
+      <h2 id="t">報名表單</h2>
+      <p class="hint">帶 <span class="req">*</span> 為必填</p>
+
+      <form id="f" novalidate>
+        <div class="field half">
+          <label>First Name <span class="req">*</span></label>
+          <input name="first_name" required placeholder="Benny">
+        </div>
+        <div class="field half">
+          <label>Last Name <span class="req">*</span></label>
+          <input name="last_name" required placeholder="Liu">
+        </div>
+
+        <div class="field">
+          <label>Email Address <span class="req">*</span></label>
+          <input type="email" name="email" required placeholder="you@example.com">
+        </div>
+
+        <div class="field">
+          <label>Phone</label>
+          <input type="tel" name="phone" placeholder="Your phone number" pattern="^[0-9()+\-\\s]{7,}$">
+        </div>
+
+        <div class="field">
+          <label>Organization</label>
+          <input name="organization" placeholder="Your organization">
+        </div>
+
+        <div class="field">
+          <label>Job Title</label>
+          <input name="job_title" placeholder="Your job title">
+        </div>
+
+        <div class="field">
+          <label>公司性質類別 <span class="req">*</span></label>
+          <select name="company_type" required>
+            <option value="">Select</option>
+            <option>Public Company</option>
+            <option>Private Company</option>
+            <option>Government</option>
+            <option>Nonprofit</option>
+            <option>Education</option>
+            <option>Startup</option>
+            <option>Other</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>姓名全名（以發出出席證明書） Full Name of attendee (for Attendance Certificate) <span class="req">*</span></label>
+          <input name="full_name_certificate" required placeholder="First Last">
+        </div>
+
+        <div class="field">
+          <button class="btn" type="submit">提交</button>
+          <span id="err" class="err">提交失敗，請稍後再試。</span>
+          <div id="ok" class="ok">已收到，感謝您的報名！</div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const overlay = document.getElementById('overlay');
+    document.getElementById('open').onclick = () => { overlay.style.display='flex'; overlay.setAttribute('aria-hidden','false'); }
+    document.getElementById('close').onclick = () => { overlay.style.display='none'; overlay.setAttribute('aria-hidden','true'); }
+
+    const postUrl = "https://script.google.com/macros/s/AKfycbzjGm8StlPyXH_PyLvOwzUS9oMpPlkyAzbTEVbTrAMQnNiHi-OnUKOUY3E4auguzp4Fdw/exec"; // ← 替換成步驟1拿到的 Web 應用 URL
+
+    document.getElementById('f').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.currentTarget;
+      const data = Object.fromEntries(new FormData(form).entries());
+
+      // 基本必填校驗
+      if(!data.first_name || !data.last_name || !data.email || !data.company_type || !data.full_name_certificate){
+        document.getElementById('err').textContent = "請完整填寫必填欄位。";
+        document.getElementById('err').style.display = 'inline';
+        return;
+      }
+
+      document.getElementById('err').style.display = 'none';
+
+      try {
+        const res = await fetch(postUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const json = await res.json();
+        if(json.ok){
+          document.getElementById('ok').style.display = 'block';
+          form.reset();
+        }else{
+          throw new Error(json.error || "unknown");
+        }
+      } catch (e2) {
+        document.getElementById('err').textContent = "提交失敗，請稍後再試。";
+        document.getElementById('err').style.display = 'inline';
+      }
+    });
+  </script>
+</body>
+</html>
